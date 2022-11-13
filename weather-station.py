@@ -1,16 +1,19 @@
 import json
+import base64
 import requests
 from tkinter import *
+from urllib.request import urlopen
 
 mainFont = ("Nordique Inline", 12)
 
 baseUrl = "https://api.openweathermap.org/data/2.5/weather?q="
+units = "metric"
 apiKey = ""
 
 def getData(cityName):
 
     global completUrl
-    completUrl = str(str(baseUrl) + str(cityName) + "&appid=" + str(apiKey))
+    completUrl = str(str(baseUrl) + str(cityName) + "&units=" + units + "&appid=" + str(apiKey))
     print(f"Complete Url: {completUrl}")
 
     response = requests.get(completUrl)
@@ -28,6 +31,23 @@ def displayWeather():
     weatherWindow = Tk()
     weatherWindow.geometry("400x225")
     weatherWindow.title(f"Météo de la ville de {city}")
+    weatherWindow.attributes('-alpha',0.5,)
+    weatherWindow.configure(bg="#616161")
+
+    iconUrl = str("http://openweathermap.org/img/wn/") + data["weather"][0]["icon"] + str("@2x.png")
+    weatherIcon_byt = urlopen(iconUrl).read()
+    weatherIcon_b64 = base64.encodebytes(weatherIcon_byt)
+    weatherIcon = PhotoImage(data=weatherIcon_b64)
+    weatherIconLabel = Label(weatherWindow, image=weatherIcon)
+
+    temperature = data["main"]["temp"]
+    temperatureLabel = Label(weatherWindow, text=(f"Température: {temperature}°C"), font=mainFont)
+
+    weatherIconLabel.pack()
+    temperatureLabel.pack()
+
+    weatherWindow.resizable(False, False)
+    weatherWindow.mainloop()
 
 def main():
 
