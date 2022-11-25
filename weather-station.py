@@ -1,4 +1,3 @@
-import json
 import base64
 import requests
 from tkinter import *
@@ -79,9 +78,6 @@ def displayWeather():
     weatherWindow.mainloop()
 
 def main():
-
-    if "weatherWindow" in globals():
-        weatherWindow.destroy()
 
     global mainWindow
     mainWindow = Tk()
