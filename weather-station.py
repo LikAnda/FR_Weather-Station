@@ -2,13 +2,31 @@ import json
 import base64
 import requests
 from tkinter import *
+import urllib.request
+from tkinter import messagebox
 from urllib.request import urlopen
 
+try:
+    urllib.request.urlopen("https://www.google.com/")
+except:
+    messagebox.showerror(title="Erreur", icon="error" ,message="Vous n'êtes pas connecté à internet")
+    exit()
+
 mainFont = ("Nordique Inline", 12)
+bgDisplayColor = "#807777"
+fgDisplayColor = "#FFFFFF"
 
 baseUrl = "https://api.openweathermap.org/data/2.5/weather?q="
 units = "metric"
 apiKey = ""
+
+def checkError(data):
+    errorCode = data["cod"]
+    print(f"Cod: {errorCode}")
+    if errorCode == "404":
+        messagebox.showerror(title=f"Erreur {errorCode}", message="La ville n'a pas été trouvé")
+        main()
+    return errorCode
 
 def getData(cityName):
 
@@ -25,31 +43,45 @@ def displayWeather():
     city = str(cityEntry.get())
 
     mainWindow.destroy()
-    data = getData(city)
-    print(data)
+    dataToDisplay = getData(city)
+    print(dataToDisplay)
+    
+    if checkError(dataToDisplay) != 200:
+        print("Error cod != 200")
+        return
 
+    global weatherWindow
     weatherWindow = Tk()
     weatherWindow.geometry("400x225")
     weatherWindow.title(f"Météo de la ville de {city}")
-    weatherWindow.attributes('-alpha',0.5,)
-    weatherWindow.configure(bg="#616161")
+    weatherWindow.configure(bg=bgDisplayColor)
 
-    iconUrl = str("http://openweathermap.org/img/wn/") + data["weather"][0]["icon"] + str("@2x.png")
+    nameData = dataToDisplay["name"]
+    titleLabel = Label(weatherWindow, text=(f"{nameData}:"), font=mainFont, bg=bgDisplayColor, fg=fgDisplayColor)
+
+    iconUrl = str("http://openweathermap.org/img/wn/") + dataToDisplay["weather"][0]["icon"] + str("@2x.png")
     weatherIcon_byt = urlopen(iconUrl).read()
     weatherIcon_b64 = base64.encodebytes(weatherIcon_byt)
     weatherIcon = PhotoImage(data=weatherIcon_b64)
-    weatherIconLabel = Label(weatherWindow, image=weatherIcon)
+    weatherIconLabel = Label(weatherWindow, image=weatherIcon, bg=bgDisplayColor)
 
-    temperature = data["main"]["temp"]
-    temperatureLabel = Label(weatherWindow, text=(f"Température: {temperature}°C"), font=mainFont)
+    temperature = dataToDisplay["main"]["temp"]
+    temperatureLabel = Label(weatherWindow, text=(f"Température: {temperature}°C"), font=mainFont, bg=bgDisplayColor, fg=fgDisplayColor)
+    temperatureFeel = dataToDisplay["main"]["feels_like"]
+    temperatureFeelLabel = Label(weatherWindow, text=f"Ressenti: {temperatureFeel}°C", font=mainFont, bg=bgDisplayColor, fg=fgDisplayColor)
 
+    titleLabel.pack()
     weatherIconLabel.pack()
     temperatureLabel.pack()
+    temperatureFeelLabel.pack()
 
     weatherWindow.resizable(False, False)
     weatherWindow.mainloop()
 
 def main():
+
+    if "weatherWindow" in globals():
+        weatherWindow.destroy()
 
     global mainWindow
     mainWindow = Tk()
