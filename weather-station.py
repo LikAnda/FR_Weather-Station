@@ -17,7 +17,26 @@ fgDisplayColor = "#FFFFFF"
 
 baseUrl = "https://api.openweathermap.org/data/2.5/weather?q="
 units = "metric"
-apiKey = ""
+lang = "fr"
+
+def checkApiKey():
+    global apiKey
+
+    apiKey = apiKeyEntry.get()
+    checkApiUrl = str(str("https://api.openweathermap.org/data/2.5/weather?appid=") + str(apiKey))
+
+    checkResponse = requests.get(checkApiUrl)
+    checkData = checkResponse.json()
+    print(f"Check data: {checkData}")
+    
+    if checkData["cod"] == "400":
+        print(f"Valid API ({apiKey})")
+        apiKeyWindow.destroy()
+        main()
+    else:
+        print(f"Invalid API ({apiKey})")
+        messagebox.showerror(title="Invalid API", message="L'API entré est invalide")
+        exit()
 
 def checkError(data):
     errorCode = data["cod"]
@@ -30,7 +49,7 @@ def checkError(data):
 def getData(cityName):
 
     global completUrl
-    completUrl = str(str(baseUrl) + str(cityName) + "&units=" + units + "&appid=" + str(apiKey))
+    completUrl = str(str(baseUrl) + str(cityName) + "&units=" + str(units) + "&lang=" + str(lang) + "&appid=" + str(apiKey))
     print(f"Complete Url: {completUrl}")
 
     response = requests.get(completUrl)
@@ -51,7 +70,7 @@ def displayWeather():
 
     global weatherWindow
     weatherWindow = Tk()
-    weatherWindow.geometry("400x225")
+    weatherWindow.geometry("400x275")
     weatherWindow.title(f"Météo de la ville de {city}")
     weatherWindow.configure(bg=bgDisplayColor)
 
@@ -69,10 +88,18 @@ def displayWeather():
     temperatureFeel = dataToDisplay["main"]["feels_like"]
     temperatureFeelLabel = Label(weatherWindow, text=f"Ressenti: {temperatureFeel}°C", font=mainFont, bg=bgDisplayColor, fg=fgDisplayColor)
 
-    titleLabel.pack()
+    minTemp = dataToDisplay["main"]["temp_min"]
+    minTempLabel = Label(weatherWindow, text=f"Température minimale: {minTemp}°C", font=mainFont, bg=bgDisplayColor, fg=fgDisplayColor)
+    maxTemp = dataToDisplay["main"]["temp_max"]
+    maxTempLabel  = Label(weatherWindow, text=f"Température maximale: {maxTemp}°C", font=mainFont, bg=bgDisplayColor, fg=fgDisplayColor)
+
+    titleLabel.pack(pady=(5,0))
     weatherIconLabel.pack()
     temperatureLabel.pack()
     temperatureFeelLabel.pack()
+
+    minTempLabel.pack(pady=(10, 0))
+    maxTempLabel.pack(pady=(0,10))
 
     weatherWindow.resizable(False, False)
     weatherWindow.mainloop()
@@ -83,8 +110,6 @@ def main():
     mainWindow = Tk()
     mainWindow.geometry("425x225")
     mainWindow.title("Weather Station")
-
-    mainWindow.wm_attributes('-transparentcolor','#000000')
 
     global cityEntry
     mainLabel = Label(mainWindow, text="Station Météo", font=("Nordique Inline", 20))
@@ -101,4 +126,21 @@ def main():
     mainWindow.resizable(False, False)
     mainWindow.mainloop()
 
-main()
+def getApiKey():
+
+    global apiKeyWindow
+    apiKeyWindow = Tk()
+    apiKeyWindow.title("API key")
+
+    global apiKeyEntry
+    infoLabel = Label(apiKeyWindow, text="Veuillez entrer une clé d'API valide:", font=mainFont)
+    apiKeyEntry = Entry(apiKeyWindow, width=30, font=mainFont)
+    checkApiButton = Button(apiKeyWindow, text="Valider", font=mainFont, command=checkApiKey)
+
+    infoLabel.pack(padx=20, pady=2)
+    apiKeyEntry.pack(padx=20, pady=2)
+    checkApiButton.pack(padx=20, pady=(4,6))
+
+    apiKeyWindow.mainloop()
+
+getApiKey()
